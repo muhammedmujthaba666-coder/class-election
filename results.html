@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Election Results</title>
+
+<style>
+body{font-family:Arial;background:#f3f6fb;padding:20px;margin:0}
+.container{max-width:1000px;margin:auto}
+.box{background:white;padding:20px;margin:15px 0;border-radius:15px;box-shadow:0 3px 12px #0001}
+h1{text-align:center;color:#17365d}
+.leader{text-align:center;background:#fff3cd}
+.result{padding:15px;margin:10px 0;background:#f8f9fa;border-radius:10px}
+.result img{width:70px;height:70px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:15px}
+.progress{height:12px;background:#ddd;border-radius:10px;overflow:hidden;margin-top:10px}
+.bar{height:100%;background:#198754}
+button{width:100%;padding:13px;margin:7px 0;border:0;border-radius:8px;color:white;font-size:16px}
+.back{background:#17365d}
+.reset{background:#dc3545}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border:1px solid #ddd}
+th{background:#17365d;color:white}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📊 Election Results</h1>
+
+<div class="box">
+<h2>Total Votes: <span id="total">0</span></h2>
+</div>
+
+<div id="leader" class="box leader"></div>
+
+<div class="box">
+<h2>Candidate Results</h2>
+<div id="results"></div>
+</div>
+
+<div class="box">
+<h2>🧑‍🎓 Voter Details</h2>
+
+<div style="overflow-x:auto">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Name</th>
+<th>Roll No</th>
+<th>Candidate</th>
+<th>Time</th>
+</tr>
+</thead>
+
+<tbody id="voters"></tbody>
+</table>
+</div>
+</div>
+
+<div class="box">
+
+<button class="back"
+onclick="location.href='index.html'">
+← Back to Voting
+</button>
+
+<button class="reset"
+onclick="resetResults()">
+🗑️ Reset Results
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const CANDIDATES="CLASS_ELECTION_CANDIDATES_FINAL";
+const VOTES="CLASS_ELECTION_VOTES_FINAL";
+const VOTERS="CLASS_ELECTION_VOTERS_FINAL";
+
+
+function loadResults(){
+
+    const candidates=
+        JSON.parse(localStorage.getItem(CANDIDATES)||"[]");
+
+    const votes=
+        JSON.parse(localStorage.getItem(VOTES)||"{}");
+
+    const voterList=
+        JSON.parse(localStorage.getItem(VOTERS)||"[]");
+
+
+    let total=0;
+    let leader=null;
+    let highest=0;
+
+    candidates.forEach(c=>{
+
+        const count=Number(votes[c.id]||0);
+
+        total+=count;
+
+        if(count>highest){
+            highest=count;
+            leader=c;
+        }
+    });
+
+
+    document.getElementById("total").textContent=total;
+
+
+    if(leader){
+
+        document.getElementById("leader").innerHTML=`
+            <h2>🏆 Current Leader</h2>
+            <img src="${leader.photo}"
+            style="width:100px;height:100px;
+            object-fit:cover;border-radius:50%">
+            <h2>${escapeHTML(leader.name)}</h2>
+            <h3>${highest} Votes</h3>
+        `;
+
+    }else{
+
+        document.getElementById("leader").innerHTML=
+        "<h2>🏆 Current Leader</h2><h3>No votes yet</h3>";
+    }
+
+
+    const resultBox=
+        document.getElementById("results");
+
+    resultBox.innerHTML="";
+
+
+    candidates.forEach(c=>{
+
+        const count=Number(votes[c.id]||0);
+
+        const percent=
+            total ? ((count/total)*100).toFixed(1) : 0;
+
+        resultBox.innerHTML+=`
+
+        <div class="result">
+
+            <img src="${c.photo}">
+
+            <b>${escapeHTML(c.name)}</b>
+
+            <p>
+            🗳️ ${count} Votes
+            &nbsp; | &nbsp;
+            ${percent}%
+            </p>
+
+            <div class="progress">
+                <div class="bar"
+                style="width:${percent}%"></div>
+            </div>
+
+        </div>`;
+    });
+
+
+    const voterTable=
+        document.getElementById("voters");
+
+    voterTable.innerHTML="";
+
+
+    voterList.forEach((v,i)=>{
+
+        voterTable.innerHTML+=`
+
+        <tr>
+            <td>${i+1}</td>
+            <td>${escapeHTML(v.name)}</td>
+            <td>${escapeHTML(v.rollNumber)}</td>
+            <td>${escapeHTML(v.candidateName)}</td>
+            <td>${escapeHTML(v.time)}</td>
+        </tr>
+
+        `;
+    });
+}
+
+
+function resetResults(){
+
+    if(!confirm(
+        "⚠️ All votes and voter details will be deleted.\n\n"+
+        "Candidate names and photos will remain.\n\n"+
+        "Continue?"
+    )) return;
+
+
+    localStorage.setItem(VOTES,"{}");
+    localStorage.setItem(VOTERS,"[]");
+
+    alert("✅ Results reset successfully.");
+
+    loadResults();
+}
+
+
+function escapeHTML(text){
+
+    const d=document.createElement("div");
+
+    d.textContent=text || "";
+
+    return d.innerHTML;
+}
+
+
+loadResults();
+
+setInterval(loadResults,1000);
+
+</script>
+
+</body>
+</html>

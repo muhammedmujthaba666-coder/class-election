@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Class Election - Vote</title>
+<style>
+body{font-family:Arial;background:#f3f6fb;padding:20px;margin:0}
+.container{max-width:900px;margin:auto}
+.box,.card{background:white;padding:20px;margin:15px 0;border-radius:15px;box-shadow:0 3px 12px #0001}
+h1{text-align:center;color:#17365d}
+input,button{width:100%;padding:13px;margin:7px 0;box-sizing:border-box;border-radius:8px;border:1px solid #ccc;font-size:16px}
+button{background:#17365d;color:white;border:0;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px}
+.card{text-align:center}
+.card img{width:150px;height:150px;object-fit:cover;border-radius:50%}
+.vote{background:#198754}
+.admin{background:#6f42c1}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>🗳️ Class Election</h1>
+
+<div class="box">
+<h2>Voter Details</h2>
+
+<input id="voterName" placeholder="Your Name">
+<input id="rollNumber" placeholder="Roll Number">
+</div>
+
+<div class="box">
+<h2>Select Candidate</h2>
+<div id="candidates" class="grid"></div>
+</div>
+
+<div class="box">
+<button class="admin" onclick="location.href='admin.html'">
+⚙️ Admin Page
+</button>
+
+<button onclick="location.href='results.html'">
+📊 View Results
+</button>
+</div>
+
+</div>
+
+<script>
+const CANDIDATES="CLASS_ELECTION_CANDIDATES_FINAL";
+const VOTES="CLASS_ELECTION_VOTES_FINAL";
+const VOTERS="CLASS_ELECTION_VOTERS_FINAL";
+
+if(!localStorage.getItem(VOTES))
+    localStorage.setItem(VOTES,"{}");
+
+if(!localStorage.getItem(VOTERS))
+    localStorage.setItem(VOTERS,"[]");
+
+function getCandidates(){
+    return JSON.parse(localStorage.getItem(CANDIDATES)||"[]");
+}
+
+function showCandidates(){
+
+    const box=document.getElementById("candidates");
+    const candidates=getCandidates();
+
+    box.innerHTML="";
+
+    if(candidates.length===0){
+        box.innerHTML="<p>No candidates available.</p>";
+        return;
+    }
+
+    candidates.forEach(c=>{
+
+        box.innerHTML+=`
+        <div class="card">
+
+            <img src="${c.photo}">
+
+            <h2>${escapeHTML(c.name)}</h2>
+
+            <button class="vote"
+                onclick="vote('${c.id}')">
+                🗳️ VOTE
+            </button>
+
+        </div>`;
+    });
+}
+
+function vote(id){
+
+    const name=
+        document.getElementById("voterName").value.trim();
+
+    const roll=
+        document.getElementById("rollNumber").value.trim();
+
+    if(!name){
+        alert("Voter name enter cheyyuka.");
+        return;
+    }
+
+    if(!roll){
+        alert("Roll number enter cheyyuka.");
+        return;
+    }
+
+    const candidates=getCandidates();
+
+    const candidate=
+        candidates.find(c=>c.id===id);
+
+    if(!candidate) return;
+
+    if(!confirm(
+        "Name: "+name+
+        "\nRoll No: "+roll+
+        "\nCandidate: "+candidate.name+
+        "\n\nVote confirm cheyyano?"
+    )) return;
+
+    const votes=
+        JSON.parse(localStorage.getItem(VOTES)||"{}");
+
+    votes[id]=(votes[id]||0)+1;
+
+    localStorage.setItem(
+        VOTES,
+        JSON.stringify(votes)
+    );
+
+    const voters=
+        JSON.parse(localStorage.getItem(VOTERS)||"[]");
+
+    voters.push({
+        name:name,
+        rollNumber:roll,
+        candidateId:id,
+        candidateName:candidate.name,
+        time:new Date().toLocaleString()
+    });
+
+    localStorage.setItem(
+        VOTERS,
+        JSON.stringify(voters)
+    );
+
+    alert("✅ Vote successfully recorded!");
+
+    document.getElementById("voterName").value="";
+    document.getElementById("rollNumber").value="";
+}
+
+function escapeHTML(text){
+    const d=document.createElement("div");
+    d.textContent=text;
+    return d.innerHTML;
+}
+
+showCandidates();
+</script>
+
+</body>
+</html>

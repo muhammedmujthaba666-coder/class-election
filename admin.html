@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin - Candidates</title>
+<style>
+body{font-family:Arial;background:#f3f6fb;padding:20px;margin:0}
+.container{max-width:900px;margin:auto}
+.box,.card{background:white;padding:20px;margin:15px 0;border-radius:15px;box-shadow:0 3px 12px #0001}
+h1{text-align:center;color:#17365d}
+input,button{width:100%;padding:12px;margin:7px 0;box-sizing:border-box;border-radius:8px;border:1px solid #ccc;font-size:16px}
+button{background:#17365d;color:white;border:0;cursor:pointer}
+.add{background:#198754}.delete{background:#dc3545}.open{background:#6f42c1}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
+.card{text-align:center}
+.card img{width:130px;height:130px;object-fit:cover;border-radius:50%}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>⚙️ Election Admin</h1>
+
+<div class="box">
+<h2>Add Candidate</h2>
+
+<input id="name" placeholder="Candidate Name">
+<input id="photo" type="file" accept="image/*">
+
+<button class="add" onclick="addCandidate()">＋ Add Candidate</button>
+</div>
+
+<div class="box">
+<h2>Candidate List</h2>
+<div id="list" class="grid"></div>
+</div>
+
+<div class="box">
+<button class="open" onclick="location.href='index.html'">
+🗳️ Open Voting Page
+</button>
+
+<button onclick="location.href='results.html'">
+📊 Open Results
+</button>
+</div>
+
+</div>
+
+<script>
+const CANDIDATES="CLASS_ELECTION_CANDIDATES_FINAL";
+
+if(!localStorage.getItem(CANDIDATES)){
+    localStorage.setItem(CANDIDATES,"[]");
+}
+
+function getCandidates(){
+    return JSON.parse(localStorage.getItem(CANDIDATES)||"[]");
+}
+
+function addCandidate(){
+
+    const name=document.getElementById("name").value.trim();
+    const file=document.getElementById("photo").files[0];
+
+    if(!name){
+        alert("Candidate name enter cheyyuka.");
+        return;
+    }
+
+    if(!file){
+        alert("Candidate photo select cheyyuka.");
+        return;
+    }
+
+    const reader=new FileReader();
+
+    reader.onload=function(e){
+
+        const candidates=getCandidates();
+
+        candidates.push({
+            id:Date.now().toString()+Math.random(),
+            name:name,
+            photo:e.target.result
+        });
+
+        localStorage.setItem(
+            CANDIDATES,
+            JSON.stringify(candidates)
+        );
+
+        document.getElementById("name").value="";
+        document.getElementById("photo").value="";
+
+        showCandidates();
+        alert("✅ Candidate added.");
+    };
+
+    reader.readAsDataURL(file);
+}
+
+function deleteCandidate(id){
+
+    if(!confirm("Ee candidate-ne delete cheyyano?")) return;
+
+    let candidates=getCandidates();
+
+    candidates=candidates.filter(c=>c.id!==id);
+
+    localStorage.setItem(
+        CANDIDATES,
+        JSON.stringify(candidates)
+    );
+
+    showCandidates();
+}
+
+function showCandidates(){
+
+    const list=document.getElementById("list");
+    const candidates=getCandidates();
+
+    list.innerHTML="";
+
+    if(candidates.length===0){
+        list.innerHTML="<p>No candidates added.</p>";
+        return;
+    }
+
+    candidates.forEach(c=>{
+
+        list.innerHTML+=`
+        <div class="card">
+            <img src="${c.photo}">
+            <h3>${escapeHTML(c.name)}</h3>
+            <button class="delete"
+                onclick="deleteCandidate('${c.id}')">
+                Delete
+            </button>
+        </div>`;
+    });
+}
+
+function escapeHTML(text){
+    const d=document.createElement("div");
+    d.textContent=text;
+    return d.innerHTML;
+}
+
+showCandidates();
+</script>
+</body>
+</html>
